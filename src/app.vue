@@ -1,22 +1,74 @@
-<script setup>
+<template>
+	<div class="container">
+		<title-bar />
+		<div class="d-flex">
+			<side-bar />
+			<div class="content">
+				<home-page />
+				<servers-page />
+				<settings-page />
+			</div>
+		</div>
+	</div>
+</template>
 
-/* template specific */
+<script>
+import Titlebar from './components/Titlebar.vue'
+import Sidebar from './components/Sidebar.vue'
+import Homepage from './components/pages/Homepage.vue'
+import Servers from './components/pages/Servers.vue'
+import Settings from './components/pages/Settings.vue'
 
-import Counter from './modules/counter/mod.vue';
-import Fetcher from './modules/fetcher/mod.vue';
+export default {
+	name: 'App',
+	components: {
+		"title-bar": Titlebar,
+		"side-bar": Sidebar,
+		"home-page": Homepage,
+		"servers-page": Servers,
+		"settings-page": Settings
+	},
+	async mounted() {
 
+	}
+}
 </script>
 
-<template>
-  <v-app>
-    <v-main class="bg-grey-lighten-4">
-      <v-container class="mx-auto" style="max-width: 768px;">
+<style>
 
-        <counter />
+:root {
+	--accent: 142, 68, 240;
+	--primary: 47, 75, 231;
+	--color-1: 4, 8, 9;
+	--color-2: 32, 32, 32;
+}
 
-        <fetcher class="mt-3" />
+html, body {
+	margin: 0;
+	padding: 0;
+	scrollbar-width: 0;
+	height: 100;
+	overflow: hidden;
+	user-select: none;
+	font-family: Nunito;
+	color: white;
+}
 
-      </v-container>
-    </v-main>
-  </v-app>
-</template>
+.content {
+	padding: 8px;
+}
+
+.content > div {
+	flex-direction: column;
+}
+
+::-webkit-scrollbar {
+	display: none;
+}
+
+.container {
+	min-height: 100svh;
+	background-color: rgb(var(--color-1));
+}
+
+</style>

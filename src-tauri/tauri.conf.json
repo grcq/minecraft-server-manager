@@ -7,10 +7,14 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "vite-tauri-template",
+    "productName": "minecraft-server-manager",
     "version": "0.1.0"
   },
   "tauri": {
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
     "allowlist": {
       "http": {
         "all": true,
@@ -18,6 +22,50 @@
         "scope": [
           "https://**",
           "http://**"
+        ]
+      },
+      "window": {
+        "center": true,
+        "close": true,
+        "hide": true,
+        "show": true,
+        "maximize": true,
+        "minimize": true,
+        "unmaximize": true,
+        "unminimize": true,
+        "startDragging": true
+      },
+      "dialog": {
+        "all": true
+      },
+      "globalShortcut": {
+        "all": true
+      },
+      "os": {
+        "all": true
+      },
+      "path": {
+        "all": true
+      },
+      "shell": {
+        "execute": true,
+        "open": true,
+        "scope": [
+          {
+            "name": "which",
+            "cmd": "which",
+            "args": true
+          },
+          {
+            "name": "cmd",
+            "cmd": "cmd",
+            "args": true
+          },
+          {
+            "name": "start",
+            "cmd": "start",
+            "args": true
+          }
         ]
       }
     },
@@ -62,11 +110,20 @@
     },
     "windows": [
       {
+        "label": "main",
+        "decorations": false,
         "fullscreen": false,
-        "height": 600,
+        "height": 786,
+        "width": 1080,
         "resizable": true,
-        "title": "Vite Tauri Template",
-        "width": 800
+        "title": "Minecraft Server Manager",
+        "transparent": false,
+        "alwaysOnTop": false,
+        "minWidth": 1080,
+        "minHeight": 786,
+        "focus": true,
+        "visible": false,
+        "center": true
       }
     ]
   }
