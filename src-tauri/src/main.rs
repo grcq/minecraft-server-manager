@@ -3,6 +3,8 @@
   windows_subsystem = "windows"
 )]
 
+mod utils;
+
 //use declerative_discord_rich_presence::DeclerativeDiscordIpcClient;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenuItem, SystemTrayMenu};
 
@@ -46,4 +48,19 @@ fn main() {
     })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
+}
+
+#[derive(Debug, thiserror::Error)]
+enum Error {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+}
+
+impl serde::Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        format!("{}", self).serialize(serializer)
+    }
 }

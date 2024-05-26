@@ -56,6 +56,8 @@ html, body {
 
 .content {
 	padding: 8px;
+	padding-right: 16px;
+	width: 100%;
 }
 
 .content > div {
