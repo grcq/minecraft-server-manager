@@ -67,9 +67,9 @@ export default {
 
         function switchDisplay(name) {
             home.style.display = (name === 'home' ? 'flex' : 'none');
-            servers.style.display = (name === 'servers' ? 'flex' : 'none');
+            if (servers) servers.style.display = (name === 'servers' ? 'flex' : 'none');
             settings.style.display = (name === 'settings' ? 'flex' : 'none');
-            //console.style.display = (name === 'console' ? 'flex' : 'none');
+            if (console) console.style.display = (name === 'console' ? 'flex' : 'none');
         }
     }
 }

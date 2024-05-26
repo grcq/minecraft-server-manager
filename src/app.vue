@@ -1,15 +1,17 @@
 <template>
-	<div class="container">
-		<title-bar />
-		<div class="d-flex">
-			<side-bar />
-			<div class="content">
-				<home-page />
-				<servers-page />
-				<settings-page />
+	<Suspense>
+		<div class="container">
+			<title-bar />
+			<div class="d-flex">
+				<side-bar />
+				<div class="content">
+					<home-page />
+					<servers-page />
+					<settings-page />
+				</div>
 			</div>
 		</div>
-	</div>
+</Suspense>
 </template>
 
 <script>
@@ -18,6 +20,22 @@ import Sidebar from './components/Sidebar.vue'
 import Homepage from './components/pages/Homepage.vue'
 import Servers from './components/pages/Servers.vue'
 import Settings from './components/pages/Settings.vue'
+
+const path = window.__TAURI__.path;
+const invoke = window.__TAURI__.invoke;
+const dataDir = await path.appDataDir();
+
+await invoke("create_dir_if_not_exists", {
+	path: dataDir
+});
+await invoke("create_dir_if_not_exists", {
+	path: dataDir + "/data"
+});
+
+await invoke("create_file_if_not_exists", {
+	path: dataDir + "/data/servers.json",
+	content: "[]"
+});
 
 export default {
 	name: 'App',
@@ -29,7 +47,7 @@ export default {
 		"settings-page": Settings
 	},
 	async mounted() {
-
+		//disableContextMenu();
 	}
 }
 </script>

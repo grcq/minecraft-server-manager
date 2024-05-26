@@ -4,7 +4,8 @@
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
     "devPath": "http://localhost:8080",
-    "distDir": "../dist"
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "minecraft-server-manager",
@@ -84,7 +85,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.khoshghadam.vite-tauri",
+      "identifier": "minecraft-server-manager",
       "longDescription": "",
       "macOS": {
         "entitlements": null,

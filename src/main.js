@@ -10,5 +10,4 @@ app.use(vuetify);
 import { unifiedApp } from './plugins/unified/unified-app';
 app.use(unifiedApp);
 
-
 app.mount('#app');
