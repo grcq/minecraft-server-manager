@@ -156,23 +156,11 @@ export default {
             });
 
             addServer(id, name, port, version, type);
+
         }
 
         function addServer(id, name, port, version, type) {
-            const server = document.createElement('div');
-            server.classList.add('server');
-            server.innerHTML = `
-                <div id="${id}" class="server v-card v-theme--light v-card--density-default v-card--variant-elevated bg-grey-darken-4">
-                    <div class="v-card-title">${name}</div>
-                    <div class="v-card-subtitle">${type} ${version} (ID: ${id})</div>
-                    <div class="v-card-text">
-                        <p>Port: ${port}</p>
-                        <p>Status: Offline</p>
-                    </div> 
-                </div>
-            `;
-
-            document.querySelector('.server-list').appendChild(server);
+            showServer(id);
         }
 
         document.querySelectorAll('.server').forEach(element => {

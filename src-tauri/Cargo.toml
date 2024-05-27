@@ -46,6 +46,7 @@ reqwest = "0.12.4"
 declarative-discord-rich-presence = { git = "https://github.com/KPidS/declarative-discord-rich-presence" }
 tokio = { version = "1.37.0", features = ["full"] }
 once_cell = "1.8.0"
+lazy_static = "1.4"
 
 [features]
 # by default Tauri runs in production mode

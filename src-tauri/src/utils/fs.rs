@@ -1,4 +1,6 @@
 use std::fs;
+use std::io::{BufRead, BufReader};
+use std::process::ChildStdout;
 use std::path::Path;
 
 use crate::Error;
@@ -75,4 +77,16 @@ pub async fn download_file(url: String, path: String) -> Result<(), Error>{
     let bytes = response.bytes().await.expect("Failed to get bytes");
     fs::write(path, bytes).expect("Failed to write file");
     Ok(())
+}
+
+pub fn read_line(stdout: ChildStdout) -> String {
+    let mut reader = BufReader::new(stdout);
+    let mut line = String::new();
+    reader.read_line(&mut line).expect("Failed to read line");
+    line
+}
+
+pub fn append_file(path: String, content: String) {
+    let previous_content = read_file(path.clone()).expect("Failed to read file");
+    fs::write(path, format!("{}{}", previous_content, content)).expect("Failed to append file");
 }

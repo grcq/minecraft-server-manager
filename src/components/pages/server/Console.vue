@@ -65,7 +65,7 @@ export default {
         
         let output = [];
         async function updateOutput(id) {
-            const isRunning = await invoke("is_server_running", {
+            const isRunning = await invoke("is_running", {
                 id
             });
             if (!isRunning) {
@@ -148,8 +148,8 @@ export default {
 .server-data .terminal .terminal-output .terminal-line {
     padding: 5px;
     font-size: 14px;
-    white-space: pre-wrap;
     font-family: monospace;
+    word-break: break-all;
 }
 
 .server-data .terminal .terminal-input {

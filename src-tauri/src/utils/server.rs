@@ -3,14 +3,18 @@ use serde_json::{json, Map, Value};
 use crate::utils::fs;
 use crate::Error;
 
-use tokio::process::{Command, Child};
-use tokio::io::{AsyncBufReadExt, BufReader, AsyncWriteExt};
-use tokio::sync::mpsc;
-use std::process::Stdio;
+use std::io::{BufRead, BufReader};
+use std::process::{Child, Command, Stdio};
 use std::collections::HashMap;
-use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use lazy_static::lazy_static;
 
-static mut RUNNING_SERVERS: Lazy<HashMap<String, Child>> = Lazy::new(|| HashMap::new());
+type ChildMap = Arc<Mutex<HashMap<String, Child>>>;
+
+lazy_static! {
+    static ref RUNNING_SERVERS: ChildMap = Arc::new(Mutex::new(HashMap::new()));
+}
 
 #[tauri::command]
 pub async fn install_server(path: &str, server_data: Map<String, Value>) -> Result<bool, Error> {
@@ -37,11 +41,11 @@ pub async fn install_server(path: &str, server_data: Map<String, Value>) -> Resu
     match server_type {
         "Vanilla" => {
             let url = format!("https://launcher.mojang.com/v1/objects/{}.jar", server_version);
-            fs::download_file(url, server_jar_path).await;
+            fs::download_file(url, server_jar_path).await?;
         }
         "Fabric" => {
             let url = format!("https://maven.fabricmc.net/net/fabricmc/fabric-server-launcher/{}/fabric-server-launcher-{}.jar", server_version, server_version);
-            fs::download_file(url, server_jar_path).await;
+            fs::download_file(url, server_jar_path).await?;
         },
         "Paper" => {
             let version_exists_url = format!("https://api.papermc.io/v2/projects/paper/versions/{}", server_version);
@@ -88,23 +92,22 @@ fn get_id(path: &str) -> &str {
 
 #[tauri::command]
 pub fn is_running(id: &str) -> bool {
-    unsafe {
-        return RUNNING_SERVERS.contains_key(id);
-    }
+    let map = RUNNING_SERVERS.lock().unwrap();
+    return map.contains_key(id);
 }
 
 #[tauri::command]
 pub fn send_command(path: &str, command: &str) -> bool {
-    let serverId = get_id(path);
-    let child = unsafe {
-        RUNNING_SERVERS.get_mut(serverId).unwrap()
-    };
-
-    let stdin = child.stdin.as_mut().expect("Failed to get stdin");
-    let _ = stdin.write_all(command.as_bytes());
-    let _ = stdin.write_all(b"\n");
-
-    true
+    let server_id = get_id(path);
+    let mut map = RUNNING_SERVERS.lock().unwrap();
+    if let Some(child) = map.get_mut(server_id) {
+        let stdin = child.stdin.as_mut().expect("Failed to get stdin");
+        //stdin.write_all(command.as_bytes()).expect("Failed to write to stdin");
+        //stdin.write_all(b"\n").expect("Failed to write to stdin");
+        return true;
+    } else {
+        return false;
+    }
 }
 
 #[tauri::command]
@@ -112,6 +115,7 @@ pub async fn start_server(path: &str) -> Result<(), Error> {
     let server_id = get_id(path);
     let start_file = format!("{}/start.bat", path);
     let output = format!("{}/output.log", path);
+    let output_clone = output.clone();
 
     if fs::exists(&output.clone()) {
         fs::remove_file(&output.clone());
@@ -119,62 +123,51 @@ pub async fn start_server(path: &str) -> Result<(), Error> {
     fs::create_file_if_not_exists(output.clone(), "".to_string());
 
     let mut child = Command::new("cmd")
+        .args(&["/C", &start_file])
         .current_dir(path)
-        .arg("/C")
-        .arg(&start_file)
-        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .stdin(Stdio::piped())
         .spawn()
         .expect("Failed to start server");
-    println!("Started server: {}", server_id);
 
-    let (tx, mut rx) = mpsc::channel(100);
-
-    let stdout = child.stdout.take().expect("Failed to get stdout");
-    let stderr = child.stderr.take().expect("Failed to get stderr");
-
-    let mut stdout_reader = BufReader::new(stdout).lines();
-    let mut stderr_reader = BufReader::new(stderr).lines();
-
-    unsafe {
-        RUNNING_SERVERS.insert(server_id.to_string(), child);
-    }
-    
-    tokio::spawn(async move {
-        loop {
-            tokio::select! {
-                line = stdout_reader.next_line() => {
-                    match line {
-                        Ok(line) => {
-                            tx.send(line).await.unwrap();
-                        }
-                        Err(line) => {
-                            println!("Error: {}", line);
-                        }
+    if let Some(stdout) = child.stdout.take() {
+        let stdout_reader = BufReader::new(stdout);
+        let stdout_thread = thread::spawn(move || {
+            for line in stdout_reader.lines() {
+                match line {
+                    Ok(line) => {
+                        fs::append_file(output.clone(), format!("\n{}", line));
                     }
-                }
-                line = stderr_reader.next_line() => {
-                    match line {
-                        Ok(line) => {
-                            tx.send(line).await.unwrap();
-                        }
-                        Err(line) => {
-                            println!("Error: {}", line);
-                        }
+                    Err(e) => {
+                        println!("Failed to read line: {}", e);
                     }
+                
                 }
             }
-        }
-    });
+        });
+    }
 
-    tokio::spawn(async move {
-        while let Some(line) = rx.recv().await {
-            let previous_output = fs::read_file(output.clone()).expect("");
-            fs::write_file(output.clone(), format!("{}\n{}", previous_output, line.unwrap_or_default()));
-        }
-    });
+    if let Some(stderr) = child.stderr.take() {
+        let stderr_reader = BufReader::new(stderr);
+        let stderr_thread = thread::spawn(move || {
+            for line in stderr_reader.lines() {
+                match line {
+                    Ok(line) => {
+                        fs::append_file(output_clone.clone(), format!("\n{}", line));
+                    }
+                    Err(e) => {
+                        println!("Failed to read line: {}", e);
+                    }
+                
+                }
+            }
+        });
+    }
 
+    let mut map = RUNNING_SERVERS.lock().unwrap();
+    map.insert(server_id.to_string(), child);
+    
     Ok(())
 }
 
@@ -183,15 +176,72 @@ pub async fn stop_server(path: &str) -> Result<(), Error> {
     fs::remove_file(&format!("{}/output.log", path));
     send_command(path, "stop");
 
+    let mut map = RUNNING_SERVERS.lock().unwrap();
     let server_id = get_id(path);
-    let child = unsafe {
-        RUNNING_SERVERS.get_mut(server_id).unwrap()
-    };
+    if let Some(mut child) = map.remove(server_id) {
+        let pid = child.id();
+        match child.kill() {
+            Ok(_) => {
+                println!("Server stopped");
+                match child.wait() {
+                    Ok(_) => {
+                        println!("Server process finished");
+                    }
+                    Err(e) => {
+                        println!("Failed to wait for server process: {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("Failed to stop server: {}", e);
+            }
+        }
 
-    child.kill().await.expect("Failed to kill server");
-    unsafe {
-        RUNNING_SERVERS.remove(server_id);
+        thread::sleep(std::time::Duration::from_secs(5));
+
+        if is_process_running(pid) {
+            println!("Server process still running");
+            if cfg!(windows) {
+                let _ = Command::new("taskkill")
+                    .args(&["/PID", &pid.to_string(), "/F"])
+                    .output()
+                    .expect("Failed to kill process");
+            } else {
+                let _ = Command::new("kill")
+                    .args(&["-9", &pid.to_string()])
+                    .output()
+                    .expect("Failed to kill process");
+            }
+
+            if (is_process_running(pid)) {
+                println!("Failed to kill server process");
+            } else {
+                println!("Server process killed");
+            }
+        } else {
+            println!("Server process not running");
+        }
+    } else {
+        println!("Server not running");
     }
 
     Ok(())
+}
+
+fn is_process_running(pid: u32) -> bool {
+    if cfg!(windows) {
+        let output = Command::new(format!("netstat -ano | findstr \"{}\"", pid))
+            .output()
+            .expect("Failed to check process status");
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        output_str.contains("LISTENING")
+    } else {
+        let output = Command::new("ps")
+            .arg("-p")
+            .arg(pid.to_string())
+            .output()
+            .expect("Failed to check process status");
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        output_str.lines().count() > 1
+    }
 }
