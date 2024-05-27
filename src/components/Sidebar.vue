@@ -33,7 +33,6 @@ export default {
         const home = document.getElementById('home');
         const servers = document.getElementById('servers');
         const settings = document.getElementById('settings');
-        const console = document.getElementById('console');
 
         switchDisplay('home');
 
@@ -58,18 +57,17 @@ export default {
             switchDisplay('settings');
         });
 
-        /*console.addEventListener('click', () => {
-            document.querySelector('.sidebar-item.active').classList.remove('active');
-            console.classList.add('active');
-
-            switchDisplay('console');
-        });*/
-
         function switchDisplay(name) {
+            const console = document.getElementById('console');
+
+            if (name === 'home' || name === 'servers' || name === 'settings') {
+                document.getElementById('server-section').style.display = 'none';
+            }
+
             home.style.display = (name === 'home' ? 'flex' : 'none');
             if (servers) servers.style.display = (name === 'servers' ? 'flex' : 'none');
             settings.style.display = (name === 'settings' ? 'flex' : 'none');
-            if (console) console.style.display = (name === 'console' ? 'flex' : 'none');
+            if (console) console.style.display = 'none';
         }
     }
 }

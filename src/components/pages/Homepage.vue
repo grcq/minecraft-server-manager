@@ -11,6 +11,18 @@
 </template>
 
 <script>
+import { options } from '../../services/rpc.js'
+
+const invoke = window.__TAURI__.invoke;
+
+const homeRpc = options['home'];
+invoke('set_rpc', {
+    details: homeRpc['details'],
+    largeText: homeRpc['large_text'],
+    smallText: homeRpc['small_text'],
+    timestamp: Date.now()
+})
+
 export default {
     name: 'home-page'
 }

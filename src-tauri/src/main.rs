@@ -7,7 +7,7 @@ mod utils;
 
 use std::sync::Mutex;
 use std::path::Path;
-//use declerative_discord_rich_presence::DeclerativeDiscordIpcClient;
+use declarative_discord_rich_presence::DeclarativeDiscordIpcClient;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenuItem, SystemTrayMenu};
 
 #[derive(Clone, serde::Serialize)]
@@ -54,6 +54,10 @@ fn main() {
     .setup(|app| {
       let window = app.get_window(&"main").unwrap();
       window.show().unwrap();
+
+      let client = DeclarativeDiscordIpcClient::new("722830000348463197");
+      client.enable();
+      app.manage(client);
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![
@@ -69,6 +73,12 @@ fn main() {
       utils::fs::create_dir_if_not_exists,
       utils::fs::create_file_if_not_exists,
       utils::server::install_server,
+      utils::server::get_terminal_output,
+      utils::server::start_server,
+      utils::server::stop_server,
+      utils::server::send_command,
+      utils::server::is_running,
+      utils::discord_rpc::set_rpc
       ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

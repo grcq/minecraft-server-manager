@@ -65,14 +65,14 @@ pub fn create_dir_if_not_exists(path: String) {
 
 #[tauri::command]
 pub fn create_file_if_not_exists(path: String, content: String) {
-    println!("path: {}", path);
     if !Path::new(&path).exists() {
         write_file(path.to_string(), content.to_string());
     }
 }
 
-pub async fn download_file(url: String, path: String) {
+pub async fn download_file(url: String, path: String) -> Result<(), Error>{
     let response = reqwest::get(&url).await.expect("Failed to send request");
     let bytes = response.bytes().await.expect("Failed to get bytes");
     fs::write(path, bytes).expect("Failed to write file");
+    Ok(())
 }
