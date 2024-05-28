@@ -4,7 +4,7 @@
         <div class="server-data">
             <div class="terminal">
                 <div class="terminal-output">
-                    <div class="terminal-line" v-for="line in output">{{ line }}</div>
+                    <!-- terminal output -->
                 </div>
                 <div class="terminal-input">
                     <input type="text" placeholder="Enter command" />

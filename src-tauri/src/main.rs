@@ -78,7 +78,8 @@ fn main() {
       utils::server::stop_server,
       utils::server::send_command,
       utils::server::is_running,
-      utils::discord_rpc::set_rpc
+      utils::discord_rpc::set_rpc,
+      utils::discord_rpc::toggle_rpc,
       ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

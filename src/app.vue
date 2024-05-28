@@ -37,6 +37,11 @@ await invoke("create_file_if_not_exists", {
 	content: "[]"
 });
 
+await invoke("create_file_if_not_exists", {
+	path: dataDir + "/data/settings.json",
+	content: "{}"
+});
+
 export default {
 	name: 'App',
 	components: {

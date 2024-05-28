@@ -15,7 +15,7 @@
                     <div class="sidebar-items-section" id="server-section">
                         <div class="sidebar-content-separator"></div>
                         <div id="console-btn" class="sidebar-item">Console</div>
-                        <div class="sidebar-item">Files</div>
+                        <div id="files-btn" class="sidebar-item">Files</div>
                         <div class="sidebar-item">Options</div>
                         <div class="sidebar-item">Backup</div>
                         <div class="sidebar-item">Logs</div>
@@ -27,6 +27,11 @@
 </template>
 
 <script>
+import { options } from '../services/rpc.js'
+import { getSetting } from '../services/settings.js'
+
+const invoke = window.__TAURI__.invoke;
+
 export default {
     name: 'side-bar',
     async mounted() {
@@ -57,8 +62,9 @@ export default {
             switchDisplay('settings');
         });
 
-        function switchDisplay(name) {
+        async function switchDisplay(name) {
             const console = document.getElementById('console');
+            const files = document.getElementById('files');
 
             if (name === 'home' || name === 'servers' || name === 'settings') {
                 document.getElementById('server-section').style.display = 'none';
@@ -68,6 +74,17 @@ export default {
             if (servers) servers.style.display = (name === 'servers' ? 'flex' : 'none');
             settings.style.display = (name === 'settings' ? 'flex' : 'none');
             if (console) console.style.display = 'none';
+            if (files) files.style.display = 'none';
+
+            if (await getSetting('discordRpc', true)) {
+                const rpc = options[name];
+                invoke('set_rpc', {
+                    details: rpc['details'],
+                    largeText: rpc['large_text'],
+                    smallText: rpc['small_text'],
+                    timestamp: Date.now()
+                })
+            }
         }
     }
 }

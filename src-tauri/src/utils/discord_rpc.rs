@@ -24,3 +24,12 @@ pub fn set_rpc(
         eprintln!("Error setting activity: {:?}", e);
     }
 }
+
+#[tauri::command]
+pub fn toggle_rpc(client: State<'_, DeclarativeDiscordIpcClient>, toggle: bool) {
+    if toggle {
+        client.enable();
+    } else {
+        client.disable();
+    }
+}

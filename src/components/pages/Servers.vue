@@ -39,17 +39,24 @@
     </div>
     <div id="server-item">
         <console-page v-if="selectedServer != null" :id="selectedServer" />
+        <files-page v-if="selectedServer != null" :id="selectedServer" />
     </div>
 </template>
 
 <script>
 import Console from './server/Console.vue';
+import Files from './server/Files.vue';
+
+import { options } from '../../services/rpc.js'
+import { getSetting } from '../../services/settings.js'
+
 import { ref } from 'vue';
 
 export default {
     name: 'servers-page',
     components: {
-        'console-page': Console
+        'console-page': Console,
+        'files-page': Files
     },
     async setup() {
         const path = window.__TAURI__.path;
@@ -169,22 +176,46 @@ export default {
             });
         });
 
+        document.getElementById('console-btn').addEventListener('click', function () {
+            showServer('console');
+        });
+
+        document.getElementById('files-btn').addEventListener('click', function () {
+            showServer('files');
+        });
+
         async function showServer(display) {
             const home = document.getElementById('home');
             const servers = document.getElementById('servers');
             const settings = document.getElementById('settings');
             const console = document.getElementById('console');
+            const files = document.getElementById('files');
 
             home.style.display = 'none';
             servers.style.display = 'none';
             settings.style.display = 'none';
             if (console) console.style.display = display === 'console' ? 'flex' : 'none';
+            if (files) files.style.display = display === 'files' ? 'flex' : 'none';
 
             document.getElementById("server-section").style.display = 'block';
 
             document.querySelector('.sidebar-item.active').classList.remove('active');
             if (display === 'console') {
                 document.getElementById('console-btn').classList.add('active');
+            }
+
+            if (display === 'files') {
+                document.getElementById('files-btn').classList.add('active');
+            }
+
+            if (await getSetting('discordRpc', true)) {
+                const rpc = options[display];
+                invoke('set_rpc', {
+                    details: rpc['details'],
+                    largeText: rpc['large_text'],
+                    smallText: rpc['small_text'],
+                    timestamp: Date.now()
+                })
             }
         }
     }
