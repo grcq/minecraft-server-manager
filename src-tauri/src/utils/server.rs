@@ -245,3 +245,18 @@ fn is_process_running(pid: u32) -> bool {
         output_str.lines().count() > 1
     }
 }
+
+#[tauri::command]
+pub fn get_server_status(path: &str) -> String {
+    let server_id = get_id(path);
+    let map = RUNNING_SERVERS.lock().unwrap();
+    if let Some(child) = map.get(server_id) {
+        return "Running".to_string();
+    } else {
+        return "Offline".to_string();
+    }
+}
+
+#[tauri::command]
+pub fn upload_files(path: &str) {
+}
