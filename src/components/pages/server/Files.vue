@@ -1,5 +1,5 @@
 <template>
-    <div id="files" class="flex-column">
+    <div id="files" class="flex-column" style="display: none">
         <h1>Files</h1>
 
         <div class="files-path">

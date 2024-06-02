@@ -10,10 +10,40 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use lazy_static::lazy_static;
 
+use tauri::Manager;
+use std::io::{Read, Write};
+use std::os::windows::io::{AsRawHandle, FromRawHandle};
+use std::fs::OpenOptions;
+use std::path::Path;
+
 type ChildMap = Arc<Mutex<HashMap<String, Child>>>;
 
 lazy_static! {
     static ref RUNNING_SERVERS: ChildMap = Arc::new(Mutex::new(HashMap::new()));
+}
+
+pub fn startOutputFetching() -> String {
+    return "".to_string();
+}
+
+#[tauri::command]
+pub async fn send_message_to_service(message: String, read: bool) -> Result<String, Error> {
+    let pipe_name = r"\\.\pipe\MSMServicePipe";
+    let mut pipe = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(pipe_name)
+        .expect("Failed to open pipe");
+    pipe.write_all(message.as_bytes()).expect("Failed to write to pipe");
+
+    if read {
+        let mut buffer = [0; 512];
+        let n = pipe.read(&mut buffer).expect("Failed to read from pipe");
+        let response = String::from_utf8_lossy(&buffer[..n]);
+        return Ok(response.to_string());
+    }
+
+    Ok("Success".to_string())
 }
 
 #[tauri::command]

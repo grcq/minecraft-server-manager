@@ -78,6 +78,7 @@ fn main() {
       utils::server::stop_server,
       utils::server::send_command,
       utils::server::is_running,
+      utils::server::send_message_to_service,
       utils::discord_rpc::set_rpc,
       utils::discord_rpc::toggle_rpc,
       ])

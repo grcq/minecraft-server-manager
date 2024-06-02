@@ -34,19 +34,28 @@ export default {
 
         const dataDir = await path.appDataDir();
 
-        function action(id, action) {
+        async function action(id, action) {
             if (action === 'start') {
-                invoke("start_server", {
-                    path: dataDir + "/servers/" + id,
+                invoke("send_message_to_service", {
+                    message: "StartServer|" + id + "|" + await path.appDataDir() + "/servers",
+                    read: false
                 });
             } else if (action === 'stop') {
-                invoke("stop_server", {
-                    path: dataDir + "/servers/" + id,
+                invoke("send_message_to_service", {
+                    message: "StopServer|" + id,
+                    read: false
                 });
             } else if (action === 'restart') {
-                invoke("restart_server", {
-                    path: dataDir + "/servers/" + id,
-                })
+                invoke("send_message_to_service", {
+                    message: "StopServer|" + id,
+                    read: false
+                });
+                setTimeout(async () => {
+                    invoke("send_message_to_service", {
+                        message: "StartServer|" + id + "|" + await path.appDataDir() + "/servers",
+                        read: false
+                    });
+                }, 3000);
             }
         }
 
@@ -64,43 +73,45 @@ export default {
         var scrollHeight = 0;
         
         let output = [];
-        async function updateOutput(id) {
-            const isRunning = await invoke("is_running", {
-                id
+        function updateOutput(id) {
+            /*const isRunning = await invoke("send_message_to_service", {
+                message: "IsRunning|" + id,
             });
             if (!isRunning) {
                 output = [];
                 document.querySelector(".terminal-output").innerHTML = "";
                 return;
-            }
+            }*/
 
-            const o = await invoke("get_terminal_output", {
-                path: dataDir + "/servers/" + id
-            });
+            const o = invoke("send_message_to_service", {
+                message: "GetOutput|" + id,
+                read: true
+            }).then(() => {
             // only add new lines
-            let lines = o.split("\n");
-            lines.shift();
-            lines.shift();
-            lines.shift();
-
-            let i = 0;
-            while (lines && lines.length && lines[0] === output[i]) {
+                let lines = o.split("\n");
                 lines.shift();
-                i++;
-            }
+                lines.shift();
+                lines.shift();
 
-            output = output.concat(lines);
-            //check if the user is at the bottom of the terminal
-            const terminalOutput = document.querySelector(".terminal-output");
-            const atBottom = terminalOutput.scrollTop + terminalOutput.clientHeight >= terminalOutput.scrollHeight;
+                let i = 0;
+                while (lines && lines.length && lines[0] === output[i]) {
+                    lines.shift();
+                    i++;
+                }
 
-            for (lines of lines) {
-                terminalOutput.innerHTML += `<div class="terminal-line">${lines}</div>`;
-            }
+                output = output.concat(lines);
+                //check if the user is at the bottom of the terminal
+                const terminalOutput = document.querySelector(".terminal-output");
+                const atBottom = terminalOutput.scrollTop + terminalOutput.clientHeight >= terminalOutput.scrollHeight;
 
-            if (atBottom) {
-                terminalOutput.scrollTop = terminalOutput.scrollHeight;
-            }
+                for (lines of lines) {
+                    terminalOutput.innerHTML += `<div class="terminal-line">${lines}</div>`;
+                }
+
+                if (atBottom) {
+                    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                }
+            })
         }
 
         const input = document.querySelector(".terminal-input input");
@@ -115,7 +126,8 @@ export default {
             }
         });
         
-        setInterval(() => updateOutput(id), 1000);
+        updateOutput(id);
+        //setInterval(() => updateOutput(id), 1000);
 
         document.querySelector(".terminal-output").addEventListener("scroll", function() {
             if (scrollHeight < this.scrollHeight) {

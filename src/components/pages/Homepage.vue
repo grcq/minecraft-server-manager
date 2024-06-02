@@ -16,7 +16,6 @@ import { getSetting } from '../../services/settings.js';
 
 const invoke = window.__TAURI__.invoke;
 
-
 export default {
     name: 'home-page'
 }
